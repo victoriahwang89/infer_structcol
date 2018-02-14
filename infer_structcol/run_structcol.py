@@ -112,24 +112,25 @@ def calc_refl_trans(volume_fraction, radius, thickness, Sample, ntrajectories, n
     particle_index = sc.Quantity(Sample.particle_index, '')
     matrix_index = sc.Quantity(Sample.matrix_index, '')
     medium_index = sc.Quantity(Sample.medium_index, '')
+    front_index = sc.Quantity(Sample.front_index, '')
+    back_index = sc.Quantity(Sample.back_index, '')
     incident_angle = Sample.incident_angle
     wavelength = sc.Quantity(Sample.wavelength, 'nm')
-    
-    # Calculate the effective index of the sample
-    sample_index = ri.n_eff(particle_index, matrix_index, volume_fraction)        
-    
+        
     reflectance = np.zeros(len(wavelength))
     transmittance = np.zeros(len(wavelength))
     for i in np.arange(len(wavelength)):    
+        # Calculate the effective index of the sample
+        sample_index = ri.n_eff(particle_index[i], matrix_index[i], volume_fraction, maxwell_garnett=True)        
+        
         # Calculate the phase function and scattering and absorption lengths 
         # from the single scattering model
         p, mu_scat, mu_abs = mc.calc_scat(particle_radius, particle_index[i], 
-                                          sample_index[i], volume_fraction, 
-                                            wavelength[i], phase_mie=False, 
-                                                mu_scat_mie=False)
+                                          sample_index, volume_fraction, 
+                                            wavelength[i])
             
         # Initialize the trajectories
-        r0, k0, W0 = mc.initialize(nevents, ntrajectories, medium_index[i], sample_index[i], seed=seed, 
+        r0, k0, W0 = mc.initialize(nevents, ntrajectories, medium_index[i], sample_index, seed=seed, 
                                    incidence_angle=incident_angle)
         r0 = sc.Quantity(r0, 'um')
         k0 = sc.Quantity(k0, '')
@@ -151,7 +152,9 @@ def calc_refl_trans(volume_fraction, radius, thickness, Sample, ntrajectories, n
 
         # Calculate the reflection fraction 
         reflectance[i], transmittance[i] = mc.calc_refl_trans(trajectories, sc.Quantity('0.0 um'), 
-                                        thickness, medium_index[i], 
-                                        sample_index[i], detection_angle=np.pi/2)
+                                                              thickness, medium_index[i], 
+                                                              sample_index, n_front=front_index[i], 
+                                                              n_back=back_index[i], 
+                                                              detection_angle=np.pi/2)
 
     return(reflectance, transmittance)
