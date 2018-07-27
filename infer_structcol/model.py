@@ -1,4 +1,4 @@
-'''
+''' 
 This file contains the generative model to calculate posterior probabilities.
 '''
 
@@ -11,7 +11,7 @@ from .run_structcol import calc_refl_trans, calc_sigma
 
 minus_inf = -1e100 # required since emcee throws errors if we actually pass in -inf
 
-def calc_model_spect(sample, theta, sigma, ntrajectories, nevents, seed=None):
+def calc_model_spect(sample, theta, sigma, ntrajectories, nevents, losses, seed=None):
     ''''
     Calculates a corrected theoretical spectrum from a set of parameters.
     
@@ -34,27 +34,31 @@ def calc_model_spect(sample, theta, sigma, ntrajectories, nevents, seed=None):
         if specified, passes the seed through to the MC multiple scattering 
         calculation
     '''
-    if len(theta) == 7:
-        phi, radius, thickness, l0_r, l1_r, l0_t, l1_t = theta
-        loss_r = l0_r + l1_r*rescale(sample.wavelength)
-        loss_t = l0_t + l1_t*rescale(sample.wavelength)
-    if len(theta) == 5:
-        phi, radius, thickness, l0, l1 = theta 
-        loss_r = l0 + l1*rescale(sample.wavelength)
-        loss_t = loss_r
-    
+    if losses == True:
+        if len(theta) == 7:
+            phi, radius, thickness, l0_r, l1_r, l0_t, l1_t = theta
+            loss_r = l0_r + l1_r*rescale(sample.wavelength)
+            loss_t = l0_t + l1_t*rescale(sample.wavelength)
+        if len(theta) == 5:
+            phi, radius, thickness, l0, l1 = theta 
+            loss_r = l0 + l1*rescale(sample.wavelength)
+            loss_t = loss_r
+    else: 
+        phi, radius, thickness = theta
     # Calculate the reflectance and transmittance spectra with the multiple
     # scattering model
     sigma_r, sigma_t = sigma
     refl, trans = calc_refl_trans(phi, radius, thickness, sample, ntrajectories, nevents, seed=seed)
-    
+
     # Make a spectrum object out of the loss-corrected spectra and their standard deviations 
     theory_spectrum = Spectrum(sample.wavelength, reflectance = refl, 
                                transmittance = trans, sigma_r = sigma_r, sigma_t = sigma_t)
-    theory_spectrum['reflectance'] *= (1-loss_r)
-    theory_spectrum['sigma_r'] *= (1-loss_r)
-    theory_spectrum['transmittance'] *= (1-loss_t)
-    theory_spectrum['sigma_t'] *= (1-loss_t)
+
+    if losses == True:
+        theory_spectrum['reflectance'] *= (1-loss_r)
+        theory_spectrum['sigma_r'] *= (1-loss_r)
+        theory_spectrum['transmittance'] *= (1-loss_t)
+        theory_spectrum['sigma_t'] *= (1-loss_t)
     
     return theory_spectrum
 
@@ -91,7 +95,7 @@ def calc_resid_spect(spect1, spect2):
                     sigma_r = sigma_eff_r, transmittance = residual_t, 
                     sigma_t = sigma_eff_t)
 
-def calc_log_prior(theta, theta_range):
+def calc_log_prior(theta, theta_range, losses):
     '''
     Calculates log of prior probability of obtaining theta.
     
@@ -106,20 +110,23 @@ def calc_log_prior(theta, theta_range):
         min_l0_r, max_l0_r, min_l1_r, max_l1_r, min_l0_t, max_l0_t, min_l1_t, max_l1_t)) 
     
     '''
-    if len(theta) == 7:
-        vol_frac, radius, thickness, l0_r, l1_r, l0_t, l1_t = theta
-        if l0_r < 0 or l0_r > 1 or l0_r+l1_r <0 or l0_r+l1_r > 1:
-            # Losses are not in range [0,1] for some wavelength
-            return -np.inf 
-        if l0_t < 0 or l0_t > 1 or l0_t+l1_t <0 or l0_t+l1_t > 1:
-            # Losses are not in range [0,1] for some wavelength
-            return -np.inf 
-    if len(theta) == 5:
-        vol_frac, radius, thickness, l0, l1 = theta
-        if l0 < 0 or l0 > 1 or l0+l1 <0 or l0+l1 > 1:
-            # Losses are not in range [0,1] for some wavelength
-            return -np.inf 
-
+    if losses == True:
+        if len(theta) == 7:
+            vol_frac, radius, thickness, l0_r, l1_r, l0_t, l1_t = theta
+            if l0_r < 0 or l0_r > 1 or l0_r+l1_r <0 or l0_r+l1_r > 1:
+                # Losses are not in range [0,1] for some wavelength
+                return -np.inf 
+            if l0_t < 0 or l0_t > 1 or l0_t+l1_t <0 or l0_t+l1_t > 1:
+                # Losses are not in range [0,1] for some wavelength
+                return -np.inf 
+        if len(theta) == 5:
+            vol_frac, radius, thickness, l0, l1 = theta
+            if l0 < 0 or l0 > 1 or l0+l1 <0 or l0+l1 > 1:
+                # Losses are not in range [0,1] for some wavelength
+                return -np.inf 
+    else: 
+        vol_frac, radius, thickness = theta
+    
     if not theta_range['min_phi'] < vol_frac < theta_range['max_phi']:
         # Outside range of prior values
         return -np.inf
@@ -160,7 +167,7 @@ def calc_likelihood(spect1, spect2):
         
     return prefactor * np.exp(-chi_square/2)
 
-def log_posterior(theta, data_spectrum, sample, theta_range, sigma, ntrajectories, nevents, seed=None):
+def log_posterior(theta, data_spectrum, sample, theta_range, sigma, ntrajectories, nevents, losses, seed=None):
     '''
     Calculates log-posterior of a set of parameters producing an observed 
     reflectance spectrum
@@ -190,12 +197,12 @@ def log_posterior(theta, data_spectrum, sample, theta_range, sigma, ntrajectorie
         calculation
     '''    
     check_wavelength(data_spectrum, sample) # not used for anything, but we need to run the check.
-    log_prior = calc_log_prior(theta, theta_range)
+    log_prior = calc_log_prior(theta, theta_range, losses)
     if log_prior == -np.inf:
         # don't bother running MC
         return minus_inf
 
-    theory_spectrum = calc_model_spect(sample, theta, sigma, ntrajectories, nevents, seed)
+    theory_spectrum = calc_model_spect(sample, theta, sigma, ntrajectories, nevents, losses, seed)
     likelihood = calc_likelihood(data_spectrum, theory_spectrum)
 
     if likelihood == 0:

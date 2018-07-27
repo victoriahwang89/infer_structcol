@@ -32,7 +32,7 @@ def test_io():
     assert_almost_equal(trans_spectrum.wavelength[0],450)
     assert_almost_equal(trans_spectrum.transmittance[0],0.2177503094414867668)
     assert_almost_equal(trans_spectrum.sigma_t[0],0.022119987764703603)
-    
+
     refl_spectrum.save(refl_convert_direc)
     trans_spectrum.save(trans_convert_direc)
 

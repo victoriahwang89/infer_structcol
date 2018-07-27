@@ -190,6 +190,7 @@ def convert_dtype(inval):
     if np.isscalar(inval):
         inval = [inval]
     return np.array(inval).astype('float64')
+    #return np.array(inval).astype('complex64')
 
 def find_filenames(directory, suffix=".csv" ):
     '''

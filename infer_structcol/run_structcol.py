@@ -116,12 +116,11 @@ def calc_refl_trans(volume_fraction, radius, thickness, Sample, ntrajectories, n
     back_index = sc.Quantity(Sample.back_index, '')
     incident_angle = Sample.incident_angle
     wavelength = sc.Quantity(Sample.wavelength, 'nm')
-        
     reflectance = np.zeros(len(wavelength))
     transmittance = np.zeros(len(wavelength))
     for i in np.arange(len(wavelength)):    
         # Calculate the effective index of the sample
-        sample_index = ri.n_eff(particle_index[i], matrix_index[i], volume_fraction, maxwell_garnett=True)        
+        sample_index = ri.n_eff(particle_index[i], matrix_index[i], volume_fraction, maxwell_garnett=False)        
         
         # Calculate the phase function and scattering and absorption lengths 
         # from the single scattering model
