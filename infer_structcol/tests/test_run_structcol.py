@@ -27,13 +27,15 @@ def test_run_structcol():
     volume_fraction = 0.5
     incident_angle = 0.0
     medium_index = np.array([1.0, 1.0]) 
+    front_index = np.array([1.0, 1.0])
+    back_index = np.array([1.0, 1.0]) 
     
     wavelength_ind = find_close_indices(wavelength_sigma, sc.Quantity(wavelength,'nm'))
     sigma_test = sigma[np.array(wavelength_ind)]
     
     refl, trans = calc_refl_trans(volume_fraction, particle_radius, thickness, 
-                               Sample(wavelength, particle_index, matrix_index, 
-                                      medium_index, incident_angle), ntrajectories, nevents, seed=1)
+                               Sample(wavelength, particle_index, matrix_index, medium_index, 
+                                      front_index, back_index, incident_angle), ntrajectories, nevents, seed=1)
     spectrum = Spectrum(wavelength, reflectance = refl, transmittance = trans, 
                         sigma_r = sigma_test, sigma_t = sigma_test)
     

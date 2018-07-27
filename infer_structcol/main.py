@@ -85,18 +85,49 @@ class Sample:
         refractive index of matrix at each wavelength
     medium_index: array of length N or scalar
         refractive index of propagation medium at each wavelength
+    front_index: array of length N or scalar
+        refractive index of front interface (first interface that light shines
+        on, eg, a glass slide)
+    back_index: array of length N or scalar
+        refractive index of back interface (interface that light encounters
+        after leaving the sample, eg, a glass slide)
     incident_angle: scalar
         angle of incident light on the sample
+    vf: scalar or None
+        volume fraction of the sample (optional)
+    radius: scalar or None
+        radius of the particles (optional)
+    thickness: scalar or None
+        thickness of the sample (optional)
     '''
     def __init__(self, wavelength, particle_index, 
-                 matrix_index, medium_index=1, incident_angle=0):
+                 matrix_index, medium_index=1, front_index=1, back_index=1, 
+                 incident_angle=0, phi=None, radius=None, thickness=None, 
+                 l0_r=None, l1_r=None, l0_t=None, l1_t=None):
         self.wavelength = convert_dtype(wavelength)   # in nm
 
         self.particle_index = extend_array(particle_index, len(self.wavelength))
         self.matrix_index = extend_array(matrix_index, len(self.wavelength))
         self.medium_index = extend_array(medium_index, len(self.wavelength))
+        self.front_index = extend_array(front_index, len(self.wavelength))
+        self.back_index = extend_array(back_index, len(self.wavelength))
         self.incident_angle = incident_angle
-
+        
+        if phi is not None: 
+            self.phi = phi
+        if radius is not None:
+            self.radius = radius          # in nm
+        if thickness is not None:
+            self.thickness = thickness    # in um
+        if l0_r is not None:
+            self.l0_r = l0_r
+        if l1_r is not None:
+            self.l1_r = l1_r
+        if l0_t is not None:
+            self.l0_t = l0_t
+        if l1_t is not None:
+            self.l1_t = l1_t
+            
 def extend_array(val, n):
     '''
     Returns an array of val of length n.
