@@ -38,10 +38,12 @@ def find_max_like(data, sample, theta_guess, theta_range, sigma, ntrajectories, 
     sample: Sample object
         information about the sample that produced data_spectrum
     theta_guess: dictionary 
-        best guess of the expected parameter values (phi, radius, thickness, l0_r, l1_r, l0_t, l1_t)
+        best guess of the expected parameter values (particle_index, matrix_index, 
+        phi, radius, thickness, l0_r, l1_r, l0_t, l1_t)
     theta_range: dictionary
         expected ranges of the parameter values 
-        (min_phi, max_phi, min_radius, max_radius, min_thickness, max_thickness, 
+        (min_particle_index, max_particle_index, min_matrix_index, max_matrix_index,
+        min_phi, max_phi, min_radius, max_radius, min_thickness, max_thickness, 
         min_l0_r, max_l0_r, min_l1_r, max_l1_r, min_l0_t, max_l0_t, min_l1_t, max_l1_t) 
     sigma: 2-tuple
         uncertainties (taken to be 1 standard deviation) of the multiple scattering
@@ -56,8 +58,9 @@ def find_max_like(data, sample, theta_guess, theta_range, sigma, ntrajectories, 
         
     Returns
     -------
-    theta: 5 or 7 -tuple
-        best fit (phi, radius, thickness, l0, l1) or (phi, radius, thickness, 
+    theta: 7 or 9-tuple
+        best fit (particle_index, matrix_index, phi, radius, thickness, l0, l1) 
+        or (particle_index, matrix_index, phi, radius, thickness, 
         l0_r, l1_r, l0_t, l1_t) as floats
     '''
     # define a function that takes in a dictionary of the initial theta and 
@@ -104,10 +107,12 @@ def run_mcmc(data, sample, nwalkers, nsteps, theta_guess = theta_guess_default,
     nsteps: int
         number of steps taken by each walker
     theta_guess: dictionary (optional)
-        user's best guess of the expected parameter values (phi, radius, thickness)
+        user's best guess of the expected parameter values (particle_index, 
+        matrix_index, phi, radius, thickness)
     theta_range: dictionary (optional)
         user's best guess of the expected ranges of the parameter values 
-        (min_phi, max_phi, min_radius, max_radius, min_thickness, max_thickness) 
+        (min_particle_index, max_particle_index, min_matrix_index, max_matrix_index, 
+        min_phi, max_phi, min_radius, max_radius, min_thickness, max_thickness) 
     ntrajectories: int
         number of trajectories for the multiple scattering calculations
     nevents: int
@@ -200,7 +205,8 @@ def run_mcmc(data, sample, nwalkers, nsteps, theta_guess = theta_guess_default,
     nthreads = np.min([nwalkers, mp.cpu_count()])
 
     sampler = emcee.EnsembleSampler(nwalkers, ndim, log_posterior, 
-                                    args=[data, sample, theta_range, sigma, ntrajectories, nevents, losses, seed], threads=nthreads)
+                                    args=[data, sample, theta_range, sigma,
+                                          ntrajectories, nevents, losses, seed], threads=nthreads)
     sampler.run_mcmc(theta, nsteps)
 
     return sampler
@@ -218,10 +224,12 @@ def run_mcmc_without_inference(data, sample, theta_guess, theta_range,
     sample: Sample object
         information about the sample that produced data_spectrum
     theta_guess: dictionary (optional)
-        user's best guess of the expected parameter values (phi, radius, thickness)
+        user's best guess of the expected parameter values (particle_index, 
+        matrix_index, phi, radius, thickness)
     theta_range: dictionary (optional)
         user's best guess of the expected ranges of the parameter values 
-        (min_phi, max_phi, min_radius, max_radius, min_thickness, max_thickness) 
+        (min_particle_index, max_particle_index, min_matrix_index, max_matrix_index, 
+        min_phi, max_phi, min_radius, max_radius, min_thickness, max_thickness) 
     ntrajectories: int
         number of trajectories for the multiple scattering calculations
     nevents: int
@@ -245,7 +253,7 @@ def run_mcmc_without_inference(data, sample, theta_guess, theta_range,
            
     # update the theta_guess and theta_range dictionaries depending on whether
     # the user inputs reflectance and/or transmittance data
-    guess_keylist = ['phi', 'radius', 'thickness']
+    guess_keylist = ['particle_index', 'matrix_index', 'phi', 'radius', 'thickness']
     if losses == True:
         if 'reflectance' in data.keys():
             guess_keylist = guess_keylist + ['l0_r', 'l1_r']
@@ -262,7 +270,8 @@ def run_mcmc_without_inference(data, sample, theta_guess, theta_range,
 
     # Calculate the standard deviation of the multiple scattering calculations
     # based on number of trajectories and number of scattering events
-    sigma = calc_sigma(theta_guess['phi'], theta_guess['radius'], theta_guess['thickness'], 
+    sigma = calc_sigma(theta_guess['particle_index'], theta_guess['matrix_index'], 
+                       theta_guess['phi'], theta_guess['radius'], theta_guess['thickness'], 
                        sample, ntrajectories, nevents, plot=False, seed=seed)
    
     theta = find_max_like(data, sample, theta_guess, theta_range, sigma, ntrajectories, nevents, losses, seed)

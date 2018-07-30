@@ -19,10 +19,11 @@ def calc_model_spect(sample, theta, sigma, ntrajectories, nevents, losses, seed=
     -------
     sample: Sample object
         information about the sample that produced data_spectrum
-    theta: 5- or 7-tuple 
-        set of inference parameter values - volume fraction, particle radius, 
-        thickness, reflection baseline loss, reflection wavelength dependent loss, 
-        transmission baseline loss, transmission wavelength dependent loss
+    theta: 7- or 9-tuple 
+        set of inference parameter values - particle index, matrix index, 
+        volume fraction, particle radius, thickness, reflection baseline loss, 
+        reflection wavelength dependent loss, transmission baseline loss, 
+        transmission wavelength dependent loss
     sigma: 2-tuple
         uncertainties (taken to be 1 standard deviation) of the multiple scattering
         calculations (reflectance sigma, transmittance sigma).
@@ -101,12 +102,14 @@ def calc_log_prior(theta, theta_range, losses):
     
     Parameters
     -------
-    theta: 5-, 7-tuple 
-        set of inference parameter values - volume fraction, particle radius, 
-        thickness, baseline loss, wavelength dependent loss
+    theta: 7-, 9-tuple 
+        set of inference parameter values - particle index, matrix index, 
+        volume fraction, particle radius, thickness, baseline loss, 
+        wavelength dependent loss
     theta_range: dictionary
         best guess of the expected ranges of the parameter values 
-        (min_phi, max_phi, min_radius, max_radius, min_thickness, max_thickness, 
+        (min_particle_index, max_particle_index, min_matrix_index, max_matrix_index, 
+        min_phi, max_phi, min_radius, max_radius, min_thickness, max_thickness, 
         min_l0_r, max_l0_r, min_l1_r, max_l1_r, min_l0_t, max_l0_t, min_l1_t, max_l1_t)) 
     
     '''
@@ -182,16 +185,18 @@ def log_posterior(theta, data_spectrum, sample, theta_range, sigma, ntrajectorie
     
     Parameters
     ----------
-    theta: 5- or 7-tuple 
-        set of inference parameter values - volume fraction, particle radius, 
-        thickness, baseline loss, wavelength dependent loss
+    theta: 7- or 9-tuple 
+        set of inference parameter values - particle index, matrix index, 
+        volume fraction, particle radius, thickness, baseline loss, 
+        wavelength dependent loss
     data_spectrum: Spectrum object
         experimental dataset
     sample: Sample object
         information about the sample that produced data_spectrum
     theta_range: dictionary
         best guess of the expected ranges of the parameter values 
-        (min_phi, max_phi, min_radius, max_radius, min_thickness, max_thickness, 
+        (min_particle_index, max_particle_index, min_matrix_index, max_matrix_index, 
+        min_phi, max_phi, min_radius, max_radius, min_thickness, max_thickness, 
         min_l0_r, max_l0_r, min_l1_r, max_l1_r, min_l0_t, max_l0_t, min_l1_t, max_l1_t)) 
     sigma: 2-tuple
         uncertainties (taken to be 1 standard deviation) of the multiple scattering

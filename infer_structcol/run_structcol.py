@@ -21,6 +21,10 @@ def calc_sigma(particle_index, matrix_index, volume_fraction, radius, thickness,
 
     Parameters
     ----------
+    particle_index: float
+        index of refraction of scatterer
+    matrix_index: float
+        index of refraction of material in which scatterer is embedded
     volume_fraction : float 
         volume fraction of scatterer in the system
     radius : float (in nm)

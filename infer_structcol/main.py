@@ -79,10 +79,6 @@ class Sample:
     -------
     wavelength: array of length N
         wavelengths corresponding to refractive indices
-    particle_index: array of length N or scalar
-        refractive index of particles at each wavelength
-    matrix_index: array of length N or scalar
-        refractive index of matrix at each wavelength
     medium_index: array of length N or scalar
         refractive index of propagation medium at each wavelength
     front_index: array of length N or scalar
@@ -92,7 +88,11 @@ class Sample:
         refractive index of back interface (interface that light encounters
         after leaving the sample, eg, a glass slide)
     incident_angle: scalar
-        angle of incident light on the sample
+        angle of incident light on the sample 
+    particle_index: scalar or None (optional)
+        refractive index of particles at each wavelength
+    matrix_index: scalar or None (optional)
+        refractive index of matrix at each wavelength
     vf: scalar or None
         volume fraction of the sample (optional)
     radius: scalar or None
