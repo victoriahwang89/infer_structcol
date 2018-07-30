@@ -13,7 +13,8 @@ import seaborn as sns
 import os
 sns.set(font_scale=1.3) 
 
-def calc_sigma(volume_fraction, radius, thickness, Sample, ntrajectories, nevents, run_num=100, plot=True, seed=None):
+def calc_sigma(particle_index, matrix_index, volume_fraction, radius, thickness, 
+               Sample, ntrajectories, nevents, run_num=100, plot=True, seed=None):
     """
     Calculates the standard deviation of the multiple scattering calculations
     by running the multiple scattering code run_num times.
@@ -53,7 +54,8 @@ def calc_sigma(volume_fraction, radius, thickness, Sample, ntrajectories, nevent
     reflectance = np.zeros([run_num, len(wavelength)])
     transmittance = np.zeros([run_num, len(wavelength)])
     for n in np.arange(run_num):
-         reflectance[n,:], transmittance[n,:] = calc_refl_trans(volume_fraction, radius, thickness, 
+         reflectance[n,:], transmittance[n,:] = calc_refl_trans(particle_index, matrix_index,
+                                                                volume_fraction, radius, thickness, 
                                                                 Sample, ntrajectories, nevents, seed)
 
     # Calculate mean and standard deviations of reflectance and transmittance
@@ -77,7 +79,8 @@ def calc_sigma(volume_fraction, radius, thickness, Sample, ntrajectories, nevent
     return(sigma_r, sigma_t)
     
 
-def calc_refl_trans(volume_fraction, radius, thickness, Sample, ntrajectories, nevents, seed):
+def calc_refl_trans(particle_index, matrix_index, volume_fraction, radius, 
+                    thickness, Sample, ntrajectories, nevents, seed):
     """
     Calculates a reflection spectrum using the structcol package.
 
@@ -109,8 +112,9 @@ def calc_refl_trans(volume_fraction, radius, thickness, Sample, ntrajectories, n
     # Read in system parameters from the Sample object
     particle_radius = sc.Quantity(radius, 'nm')
     thickness = sc.Quantity(thickness, 'um')
-    particle_index = sc.Quantity(Sample.particle_index, '')
-    matrix_index = sc.Quantity(Sample.matrix_index, '')
+    particle_index = sc.Quantity(particle_index, '')
+    matrix_index = sc.Quantity(matrix_index, '')
+    
     medium_index = sc.Quantity(Sample.medium_index, '')
     front_index = sc.Quantity(Sample.front_index, '')
     back_index = sc.Quantity(Sample.back_index, '')
@@ -120,11 +124,11 @@ def calc_refl_trans(volume_fraction, radius, thickness, Sample, ntrajectories, n
     transmittance = np.zeros(len(wavelength))
     for i in np.arange(len(wavelength)):    
         # Calculate the effective index of the sample
-        sample_index = ri.n_eff(particle_index[i], matrix_index[i], volume_fraction, maxwell_garnett=False)        
+        sample_index = ri.n_eff(particle_index, matrix_index, volume_fraction, maxwell_garnett=False)        
         
         # Calculate the phase function and scattering and absorption lengths 
         # from the single scattering model
-        p, mu_scat, mu_abs = mc.calc_scat(particle_radius, particle_index[i], 
+        p, mu_scat, mu_abs = mc.calc_scat(particle_radius, particle_index, 
                                           sample_index, volume_fraction, 
                                             wavelength[i])
             

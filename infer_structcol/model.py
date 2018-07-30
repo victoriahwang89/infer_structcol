@@ -35,20 +35,20 @@ def calc_model_spect(sample, theta, sigma, ntrajectories, nevents, losses, seed=
         calculation
     '''
     if losses == True:
-        if len(theta) == 7:
-            phi, radius, thickness, l0_r, l1_r, l0_t, l1_t = theta
+        if len(theta) == 9:
+            particle_index, matrix_index, phi, radius, thickness, l0_r, l1_r, l0_t, l1_t = theta
             loss_r = l0_r + l1_r*rescale(sample.wavelength)
             loss_t = l0_t + l1_t*rescale(sample.wavelength)
-        if len(theta) == 5:
-            phi, radius, thickness, l0, l1 = theta 
+        if len(theta) == 7:
+            particle_index, matrix_index, phi, radius, thickness, l0, l1 = theta 
             loss_r = l0 + l1*rescale(sample.wavelength)
             loss_t = loss_r
     else: 
-        phi, radius, thickness = theta
+        particle_index, matrix_index, phi, radius, thickness = theta
     # Calculate the reflectance and transmittance spectra with the multiple
     # scattering model
     sigma_r, sigma_t = sigma
-    refl, trans = calc_refl_trans(phi, radius, thickness, sample, ntrajectories, nevents, seed=seed)
+    refl, trans = calc_refl_trans(particle_index, matrix_index, phi, radius, thickness, sample, ntrajectories, nevents, seed=seed)
 
     # Make a spectrum object out of the loss-corrected spectra and their standard deviations 
     theory_spectrum = Spectrum(sample.wavelength, reflectance = refl, 
@@ -111,22 +111,30 @@ def calc_log_prior(theta, theta_range, losses):
     
     '''
     if losses == True:
-        if len(theta) == 7:
-            vol_frac, radius, thickness, l0_r, l1_r, l0_t, l1_t = theta
+        if len(theta) == 9:
+            particle_index, matrix_index, vol_frac, radius, thickness, l0_r, l1_r, l0_t, l1_t = theta
             if l0_r < 0 or l0_r > 1 or l0_r+l1_r <0 or l0_r+l1_r > 1:
                 # Losses are not in range [0,1] for some wavelength
                 return -np.inf 
             if l0_t < 0 or l0_t > 1 or l0_t+l1_t <0 or l0_t+l1_t > 1:
                 # Losses are not in range [0,1] for some wavelength
                 return -np.inf 
-        if len(theta) == 5:
-            vol_frac, radius, thickness, l0, l1 = theta
+        if len(theta) == 7:
+            particle_index, matrix_index, vol_frac, radius, thickness, l0, l1 = theta
             if l0 < 0 or l0 > 1 or l0+l1 <0 or l0+l1 > 1:
                 # Losses are not in range [0,1] for some wavelength
                 return -np.inf 
     else: 
-        vol_frac, radius, thickness = theta
+        particle_index, matrix_index, vol_frac, radius, thickness = theta
     
+    if not theta_range['min_particle_index'] < particle_index < theta_range['max_particle_index']:
+        # Outside range of prior values
+        return -np.inf
+
+    if not theta_range['min_matrix_index'] < matrix_index < theta_range['max_matrix_index']:
+        # Outside range of prior values
+        return -np.inf
+        
     if not theta_range['min_phi'] < vol_frac < theta_range['max_phi']:
         # Outside range of prior values
         return -np.inf
