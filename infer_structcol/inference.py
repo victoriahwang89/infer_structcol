@@ -67,22 +67,21 @@ def find_max_like(data, sample, theta_guess, theta_range, sigma, ntrajectories, 
     # calculates the residuals to be minimized 
     def resid(params):
         theta = []
-        for key in params:
+        for key in sorted(params):
             theta.append(params[key])
             
         # make the theta into a tuple
         theta = tuple(theta)
-        #print('theta', theta)
+
         theory_spect = calc_model_spect(sample, theta, sigma, ntrajectories, nevents, losses, seed)
         resid_spect = calc_resid_spect(data, theory_spect)
         residual = np.concatenate([resid_spect.reflectance/resid_spect.sigma_r, 
                                    resid_spect.transmittance/resid_spect.sigma_t])
-        #print('residual', residual)
         
         return residual[np.isfinite(residual)]#.view(np.float)
     
     fit_params = lmfit.Parameters()
-    for key in theta_guess:
+    for key in sorted(theta_guess):
         fit_params[key] = lmfit.Parameter(value=theta_guess[key], min=theta_range['min_'+key], max=theta_range['max_'+key])
 
     fit_params = lmfit.minimize(resid, fit_params, epsfcn=0.2, xtol=1e-20, ftol=1e-20).params
@@ -206,7 +205,7 @@ def run_mcmc(data, sample, nwalkers, nsteps, theta_guess = theta_guess_default,
 
     sampler = emcee.EnsembleSampler(nwalkers, ndim, log_posterior, 
                                     args=[data, sample, theta_range, sigma,
-                                          ntrajectories, nevents, losses, seed], threads=nthreads)
+                                          ntrajectories, nevents, losses, seed], threads=nthreads)                                     
     sampler.run_mcmc(theta, nsteps)
 
     return sampler

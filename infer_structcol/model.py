@@ -46,6 +46,7 @@ def calc_model_spect(sample, theta, sigma, ntrajectories, nevents, losses, seed=
             loss_t = loss_r
     else: 
         particle_index, matrix_index, phi, radius, thickness = theta
+
     # Calculate the reflectance and transmittance spectra with the multiple
     # scattering model
     sigma_r, sigma_t = sigma
@@ -221,5 +222,5 @@ def log_posterior(theta, data_spectrum, sample, theta_range, sigma, ntrajectorie
     if likelihood == 0:
         # don't bother running MC
         return minus_inf
-    
+
     return np.log(likelihood) + log_prior
