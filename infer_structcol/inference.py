@@ -77,7 +77,6 @@ def find_max_like(data, sample, theta_guess, theta_range, sigma, ntrajectories, 
         resid_spect = calc_resid_spect(data, theory_spect)
         residual = np.concatenate([resid_spect.reflectance/resid_spect.sigma_r, 
                                    resid_spect.transmittance/resid_spect.sigma_t])
-        #print('residual', residual)
         
         return residual[np.isfinite(residual)]#.view(np.float)
     
@@ -93,7 +92,8 @@ def find_max_like(data, sample, theta_guess, theta_range, sigma, ntrajectories, 
 
 
 def run_mcmc(data, sample, nwalkers, nsteps, theta_guess = theta_guess_default, 
-             theta_range = theta_range_default, ntrajectories=600, nevents=200, losses=False, seed=None):
+             theta_range = theta_range_default, ntrajectories=600, nevents=200, 
+             ntemps=20, losses=False, seed=None):
     '''
     Performs actual mcmc calculation. Returns an Emcee Sampler object. 
 
@@ -201,15 +201,18 @@ def run_mcmc(data, sample, nwalkers, nsteps, theta_guess = theta_guess_default,
             theta = np.vstack((matrix_index, particle_index,vf,radius,thickness,l0,l1,l0_1,l1_1)).T.tolist()
     else: 
         theta = np.vstack((matrix_index,particle_index,vf,radius,thickness)).T.tolist()
-        
+  
+    # with parallel tempering, the theta dimensions must be (ntemps, nwalkers, dim)
+    theta_array = [theta for _ in range(ntemps)]
+    theta = np.stack(theta_array, axis=0)   
+    
     # figure out how many threads to use
     nthreads = np.min([nwalkers, mp.cpu_count()])
-    ntemps = 2  #arbitrary for now
 
     sampler = emcee.PTSampler(ntemps, nwalkers, ndim, log_likelihood, log_prior,
                               loglargs=[data, sample, sigma, ntrajectories, nevents, losses, seed], 
                               logpargs=[theta_range, losses], threads=nthreads)
-
+                        
     sampler.run_mcmc(theta, nsteps)
 
     return sampler
@@ -222,7 +225,7 @@ def log_prior(theta, theta_range, losses):
         # don't bother running MC
         minus_inf = -1e100 # required since emcee throws errors if we actually pass in -inf
         return minus_inf
-    print('log prior', log_prior)
+
     return log_prior
 
 def log_likelihood(theta, data_spectrum, sample, sigma, ntrajectories, nevents, losses, seed):
@@ -234,7 +237,7 @@ def log_likelihood(theta, data_spectrum, sample, sigma, ntrajectories, nevents, 
         # don't bother running MC
         minus_inf = -1e100 # required since emcee throws errors if we actually pass in -inf
         return minus_inf  
-    print('log likelihood', likelihood)
+
     return likelihood
 
 
