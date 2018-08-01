@@ -101,7 +101,7 @@ class Sample:
         thickness of the sample (optional)
     '''
     def __init__(self, wavelength, medium_index=1, front_index=1, back_index=1, 
-                 incident_angle=0, particle_index=None, matrix_index=None, 
+                 incident_angle=0, matrix_index=None, particle_index=None, 
                  phi=None, radius=None, thickness=None, 
                  l0_r=None, l1_r=None, l0_t=None, l1_t=None):
         self.wavelength = convert_dtype(wavelength)   # in nm
@@ -109,11 +109,11 @@ class Sample:
         self.front_index = extend_array(front_index, len(self.wavelength))
         self.back_index = extend_array(back_index, len(self.wavelength))
         self.incident_angle = incident_angle
-        
+
+        if matrix_index is not None: 
+            self.matrix_index = matrix_index        
         if particle_index is not None: 
             self.particle_index = particle_index
-        if matrix_index is not None: 
-            self.matrix_index = matrix_index
         if phi is not None: 
             self.phi = phi
         if radius is not None:

@@ -13,7 +13,7 @@ import seaborn as sns
 import os
 sns.set(font_scale=1.3) 
 
-def calc_sigma(particle_index, matrix_index, volume_fraction, radius, thickness, 
+def calc_sigma(matrix_index, particle_index, volume_fraction, radius, thickness, 
                Sample, ntrajectories, nevents, run_num=100, plot=True, seed=None):
     """
     Calculates the standard deviation of the multiple scattering calculations
@@ -58,7 +58,7 @@ def calc_sigma(particle_index, matrix_index, volume_fraction, radius, thickness,
     reflectance = np.zeros([run_num, len(wavelength)])
     transmittance = np.zeros([run_num, len(wavelength)])
     for n in np.arange(run_num):
-         reflectance[n,:], transmittance[n,:] = calc_refl_trans(particle_index, matrix_index,
+         reflectance[n,:], transmittance[n,:] = calc_refl_trans(matrix_index, particle_index, 
                                                                 volume_fraction, radius, thickness, 
                                                                 Sample, ntrajectories, nevents, seed)
 
@@ -83,7 +83,7 @@ def calc_sigma(particle_index, matrix_index, volume_fraction, radius, thickness,
     return(sigma_r, sigma_t)
     
 
-def calc_refl_trans(particle_index, matrix_index, volume_fraction, radius, 
+def calc_refl_trans(matrix_index, particle_index, volume_fraction, radius, 
                     thickness, Sample, ntrajectories, nevents, seed):
     """
     Calculates a reflection spectrum using the structcol package.
@@ -134,7 +134,7 @@ def calc_refl_trans(particle_index, matrix_index, volume_fraction, radius,
         # from the single scattering model
         p, mu_scat, mu_abs = mc.calc_scat(particle_radius, particle_index, 
                                           sample_index, volume_fraction, 
-                                            wavelength[i])
+                                          wavelength[i])
             
         # Initialize the trajectories
         r0, k0, W0 = mc.initialize(nevents, ntrajectories, medium_index[i], sample_index, seed=seed, 
