@@ -176,7 +176,7 @@ def run_mcmc(data, sample, nwalkers, nsteps, theta_guess = theta_guess_default,
                  theta_range['min_radius'], theta_range['max_radius'])
     thickness = np.clip(theta[4]*np.ones(nwalkers) + 1*np.random.randn(nwalkers), 
                  theta_range['min_thickness'], theta_range['max_thickness'])
-    
+
     if losses == True:
         # Clip the distributions such that there are no walkers out of prior ranges.
         # The limits for l0_r and l1_r are fixed and the same as for l0_t and l1_t, 
