@@ -84,8 +84,8 @@ def find_max_like(data, sample, theta_guess, theta_range, sigma, ntrajectories, 
     for key in sorted(theta_guess):
         fit_params[key] = lmfit.Parameter(value=theta_guess[key], min=theta_range['min_'+key], max=theta_range['max_'+key])
 
-    fit_params = lmfit.minimize(resid, fit_params, epsfcn=0.2, xtol=1e-20, ftol=1e-20).params
-    #fit_params = lmfit.minimize(resid, fit_params).params
+    #fit_params = lmfit.minimize(resid, fit_params, epsfcn=0.2, xtol=1e-20, ftol=1e-20).params
+    fit_params = lmfit.minimize(resid, fit_params).params
     
     return tuple(fit_params.valuesdict().values())
 
@@ -166,9 +166,9 @@ def run_mcmc(data, sample, nwalkers, nsteps, theta_guess = theta_guess_default,
     ndim = len(theta)
 
     # set walkers in a distribution with width .05
-    particle_index = np.clip(theta[0]*np.ones(nwalkers) + 0.1*np.random.randn(nwalkers), 
+    particle_index = np.clip(theta[0]*np.ones(nwalkers) + 0.05*np.random.randn(nwalkers), 
                  theta_range['min_particle_index'], theta_range['max_particle_index'])
-    matrix_index = np.clip(theta[1]*np.ones(nwalkers) + 0.1*np.random.randn(nwalkers), 
+    matrix_index = np.clip(theta[1]*np.ones(nwalkers) + 0.05*np.random.randn(nwalkers), 
                  theta_range['min_matrix_index'], theta_range['max_matrix_index'])
     vf = np.clip(theta[2]*np.ones(nwalkers) + 0.01*np.random.randn(nwalkers), 
                  theta_range['min_phi'], theta_range['max_phi'])
