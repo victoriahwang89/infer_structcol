@@ -13,7 +13,9 @@ from .run_structcol import calc_sigma
 # define limits of validity for the MC scattering model. These values were 
 # chosen such that they encompass the widest range of physically meaningful values
 theta_range_default = {'min_particle_index':1.0, 'max_particle_index':3.0, 
+                       'min_particle_index_imag':0., 'max_particle_index_imag':0.1,
                        'min_matrix_index':1.0, 'max_matrix_index':3.0,
+                       'min_matrix_index_imag':0., 'max_matrix_index_imag':0.1,
                        'min_phi':0.35, 'max_phi':0.7, 'min_radius':80., 
                        'max_radius': 150., 'min_thickness':10., 'max_thickness':200., 
                        'min_l0_r':0, 'max_l0_r':1, 'min_l1_r':-1, 'max_l1_r':1,
@@ -22,7 +24,8 @@ theta_range_default = {'min_particle_index':1.0, 'max_particle_index':3.0,
 # define initial guesses for theta in case the user doesn't give an initial guess. 
 # These values were arbitrarily chosen. It is highly recommended that the user
 # passes a good initial guess based on their knowledge of the system. 
-theta_guess_default = {'particle_index':1.5, 'matrix_index':1.0, 'phi':0.568, 'radius':104, 'thickness':62, 
+theta_guess_default = {'particle_index':1.5, 'particle_index_imag':0., 'matrix_index':1.0, 
+                       'matrix_index_imag':0., 'phi':0.568, 'radius':104, 'thickness':62, 
                        'l0_r':0.02, 'l1_r':0, 'l0_t':0.02, 'l1_t':0}  # radius in nm, thickness in um
 
 def find_max_like(data, sample, theta_guess, theta_range, sigma, ntrajectories, nevents, losses, seed=None):
@@ -78,7 +81,7 @@ def find_max_like(data, sample, theta_guess, theta_range, sigma, ntrajectories, 
         residual = np.concatenate([resid_spect.reflectance/resid_spect.sigma_r, 
                                    resid_spect.transmittance/resid_spect.sigma_t])
         
-        return residual[np.isfinite(residual)]#.view(np.float)
+        return residual[np.isfinite(residual)].view(np.float)
     
     fit_params = lmfit.Parameters()
     for key in sorted(theta_guess):
@@ -141,7 +144,8 @@ def run_mcmc(data, sample, nwalkers, nsteps, theta_guess = theta_guess_default,
                         
     # update the theta_guess and theta_range dictionaries depending on whether
     # the user inputs reflectance and/or transmittance data
-    guess_keylist = ['particle_index', 'matrix_index', 'phi', 'radius', 'thickness']
+    guess_keylist = ['particle_index', 'particle_index_imag', 'matrix_index',
+                     'matrix_index_imag', 'phi', 'radius', 'thickness']
     if losses == True:
         if 'reflectance' in data.keys():
             guess_keylist = guess_keylist + ['l0_r', 'l1_r']
@@ -158,58 +162,133 @@ def run_mcmc(data, sample, nwalkers, nsteps, theta_guess = theta_guess_default,
 
     # Calculate the standard deviation of the multiple scattering calculations
     # based on number of trajectories and number of scattering events
-    sigma = calc_sigma(theta_guess['particle_index'], theta_guess['matrix_index'], 
+    sigma = calc_sigma(theta_guess['particle_index'], theta_guess['particle_index_imag'], 
+                       theta_guess['matrix_index'], theta_guess['matrix_index_imag'], 
                        theta_guess['phi'], theta_guess['radius'], theta_guess['thickness'], 
                        sample, ntrajectories, nevents, plot=False, seed=seed)
 
     theta = find_max_like(data, sample, theta_guess, theta_range, sigma, ntrajectories, nevents, losses, seed)
     ndim = len(theta)
 
-    # set walkers in a distribution with width .05
-    particle_index = np.clip(theta[0]*np.ones(nwalkers) + 0.05*np.random.randn(nwalkers), 
-                 theta_range['min_particle_index'], theta_range['max_particle_index'])
-    matrix_index = np.clip(theta[1]*np.ones(nwalkers) + 0.05*np.random.randn(nwalkers), 
-                 theta_range['min_matrix_index'], theta_range['max_matrix_index'])
-    vf = np.clip(theta[2]*np.ones(nwalkers) + 0.01*np.random.randn(nwalkers), 
-                 theta_range['min_phi'], theta_range['max_phi'])
-    radius = np.clip(theta[3]*np.ones(nwalkers) + 1*np.random.randn(nwalkers), 
-                 theta_range['min_radius'], theta_range['max_radius'])
-    thickness = np.clip(theta[4]*np.ones(nwalkers) + 1*np.random.randn(nwalkers), 
-                 theta_range['min_thickness'], theta_range['max_thickness'])
+#    # set walkers in a distribution with width .05
+#    particle_index = np.clip(theta[0]*np.ones(nwalkers) + 0.0001*np.random.randn(nwalkers), 
+#                             theta_range['min_particle_index'], theta_range['max_particle_index'])
+#    particle_index_imag = np.clip(theta[1]*np.ones(nwalkers) + 0.000001*np.random.randn(nwalkers), 
+#                                  theta_range['min_particle_index_imag'], theta_range['max_particle_index_imag'])
+#    matrix_index = np.clip(theta[2]*np.ones(nwalkers) + 0.0001*np.random.randn(nwalkers), 
+#                           theta_range['min_matrix_index'], theta_range['max_matrix_index'])
+#    matrix_index_imag = np.clip(theta[3]*np.ones(nwalkers) + 0.000001*np.random.randn(nwalkers), 
+#                                  theta_range['min_matrix_index_imag'], theta_range['max_matrix_index_imag'])    
+#    vf = np.clip(theta[4]*np.ones(nwalkers) + 0.001*np.random.randn(nwalkers), 
+#                     theta_range['min_phi'], theta_range['max_phi'])
+#    radius = np.clip(theta[5]*np.ones(nwalkers) + 0.1*np.random.randn(nwalkers), 
+#                     theta_range['min_radius'], theta_range['max_radius'])
+#    thickness = np.clip(theta[6]*np.ones(nwalkers) + 0.1*np.random.randn(nwalkers), 
+#                        theta_range['min_thickness'], theta_range['max_thickness'])
 
-    if losses == True:
-        # Clip the distributions such that there are no walkers out of prior ranges.
-        # The limits for l0_r and l1_r are fixed and the same as for l0_t and l1_t, 
-        # so we can use the default values directly
-        l0 = np.clip(theta[5]*np.ones(nwalkers) + 0.01*np.random.randn(nwalkers), 
-                 theta_range_default['min_l0_r'], theta_range_default['max_l0_r'])
-        # clip the sum of l0 and l1 and subtract l0 to ensure that the clipped 
-        # l1 satisfies 0 < l0 + l1 < 1        
-        l1 = np.clip((theta[5] + theta[6]) * np.ones(nwalkers) + 
-                  0.01*np.random.randn(nwalkers), theta_range_default['min_l1_r'], theta_range_default['max_l1_r']) - l0
-                         
-        if ndim == 7:
-            theta = np.vstack((particle_index,matrix_index,vf,radius,thickness,l0,l1)).T.tolist()
+#    if losses == True:
+#        # Clip the distributions such that there are no walkers out of prior ranges.
+#        # The limits for l0_r and l1_r are fixed and the same as for l0_t and l1_t, 
+#        # so we can use the default values directly
+#        l0 = np.clip(theta[7]*np.ones(nwalkers) + 0.01*np.random.randn(nwalkers), 
+#                 theta_range_default['min_l0_r'], theta_range_default['max_l0_r'])
+#        # clip the sum of l0 and l1 and subtract l0 to ensure that the clipped 
+#        # l1 satisfies 0 < l0 + l1 < 1        
+#        l1 = np.clip((theta[7] + theta[8]) * np.ones(nwalkers) + 
+#                  0.01*np.random.randn(nwalkers), theta_range_default['min_l1_r'], theta_range_default['max_l1_r']) - l0
+#                         
+#        if ndim == 9:
+#            theta = np.vstack((particle_index,particle_index_imag,matrix_index,
+#                               matrix_index_imag,vf,radius,thickness,l0,l1)).T.tolist()
+#            
+#        if ndim == 11:
+#            l0_1 = np.clip(theta[9] * np.ones(nwalkers) + 
+#                       0.01*np.random.randn(nwalkers), theta_range_default['min_l0_r'], theta_range_default['max_l0_r'])
+#            l1_1 = np.clip((theta[9] + theta[10]) * np.ones(nwalkers) + 
+#                       0.01*np.random.randn(nwalkers), theta_range_default['min_l1_r'], theta_range_default['max_l1_r']) - l0_1
+#            theta = np.vstack((particle_index,particle_index_imag,matrix_index,
+#                               matrix_index_imag,vf,radius,thickness,l0,l1,l0_1,l1_1)).T.tolist()
+#    else: 
+#        theta = np.vstack((particle_index,particle_index_imag,matrix_index,
+#                           matrix_index_imag,vf,radius,thickness)).T.tolist()
+############ NEW ################3
+
+    theta_matrix = generate_walkers(theta, theta_range, nwalkers, ndim, losses=False)
+                             
+    posterior=[]
+    for i in np.arange(len(theta_matrix)):
+        posterior.append(log_posterior(theta_matrix[i], data, sample, theta_range, sigma, 
+                                       ntrajectories, nevents, losses, seed=seed))
+    while np.any(np.array(posterior)==-1e100):
+        bad_nwalkers_indices = [i for i, p in enumerate(posterior) if  p==-1e100]
+        bad_nwalkers = len(bad_nwalkers_indices)
+        new_theta_matrix = generate_walkers(theta, theta_range, bad_nwalkers, ndim, losses=False)
+
+        for i in np.arange(len(new_theta_matrix)):
+            posterior[bad_nwalkers_indices[i]] = log_posterior(new_theta_matrix[i], data, 
+                                                               sample, theta_range, 
+                                                               sigma, ntrajectories, 
+                                                               nevents, losses, seed=seed)
+            theta_matrix[bad_nwalkers_indices[i]] = new_theta_matrix[i]
             
-        if ndim == 9:
-            l0_1 = np.clip(theta[7] * np.ones(nwalkers) + 
-                       0.01*np.random.randn(nwalkers), theta_range_default['min_l0_r'], theta_range_default['max_l0_r'])
-            l1_1 = np.clip((theta[7] + theta[8]) * np.ones(nwalkers) + 
-                       0.01*np.random.randn(nwalkers), theta_range_default['min_l1_r'], theta_range_default['max_l1_r']) - l0_1
-            theta = np.vstack((particle_index,matrix_index,vf,radius,thickness,l0,l1,l0_1,l1_1)).T.tolist()
-    else: 
-        theta = np.vstack((particle_index,matrix_index,vf,radius,thickness)).T.tolist()
-        
     # figure out how many threads to use
     nthreads = np.min([nwalkers, mp.cpu_count()])
 
     sampler = emcee.EnsembleSampler(nwalkers, ndim, log_posterior, 
                                     args=[data, sample, theta_range, sigma,
                                           ntrajectories, nevents, losses, seed], threads=nthreads)                                     
-    sampler.run_mcmc(theta, nsteps)
+    sampler.run_mcmc(theta_matrix, nsteps)
 
-    return sampler
-    
+    return sampler  
+
+
+def generate_walkers(theta, theta_range, nwalkers, ndim, losses=False):
+    # set walkers in a distribution with width .05
+    particle_index = np.clip(theta[0]*np.ones(nwalkers) + 0.0001*np.random.randn(nwalkers), 
+                             theta_range['min_particle_index'], theta_range['max_particle_index'])
+    particle_index_imag = np.clip(theta[1]*np.ones(nwalkers) + 0.000001*np.random.randn(nwalkers), 
+                                  theta_range['min_particle_index_imag'], theta_range['max_particle_index_imag'])
+    matrix_index = np.clip(theta[2]*np.ones(nwalkers) + 0.0001*np.random.randn(nwalkers), 
+                           theta_range['min_matrix_index'], theta_range['max_matrix_index'])
+    matrix_index_imag = np.clip(theta[3]*np.ones(nwalkers) + 0.000001*np.random.randn(nwalkers), 
+                                  theta_range['min_matrix_index_imag'], theta_range['max_matrix_index_imag'])    
+    vf = np.clip(theta[4]*np.ones(nwalkers) + 0.001*np.random.randn(nwalkers), 
+                     theta_range['min_phi'], theta_range['max_phi'])
+    radius = np.clip(theta[5]*np.ones(nwalkers) + 0.1*np.random.randn(nwalkers), 
+                     theta_range['min_radius'], theta_range['max_radius'])
+    thickness = np.clip(theta[6]*np.ones(nwalkers) + 0.1*np.random.randn(nwalkers), 
+                        theta_range['min_thickness'], theta_range['max_thickness'])
+
+    if losses == True:
+        # Clip the distributions such that there are no walkers out of prior ranges.
+        # The limits for l0_r and l1_r are fixed and the same as for l0_t and l1_t, 
+        # so we can use the default values directly
+        l0 = np.clip(theta[7]*np.ones(nwalkers) + 0.01*np.random.randn(nwalkers), 
+                 theta_range_default['min_l0_r'], theta_range_default['max_l0_r'])
+        # clip the sum of l0 and l1 and subtract l0 to ensure that the clipped 
+        # l1 satisfies 0 < l0 + l1 < 1        
+        l1 = np.clip((theta[7] + theta[8]) * np.ones(nwalkers) + 
+                  0.01*np.random.randn(nwalkers), theta_range_default['min_l1_r'], theta_range_default['max_l1_r']) - l0
+                         
+        if ndim == 9:
+            theta = np.vstack((particle_index,particle_index_imag,matrix_index,
+                               matrix_index_imag,vf,radius,thickness,l0,l1)).T.tolist()
+            return (theta, l0, l1)
+            
+        if ndim == 11:
+            l0_1 = np.clip(theta[9] * np.ones(nwalkers) + 
+                       0.01*np.random.randn(nwalkers), theta_range_default['min_l0_r'], theta_range_default['max_l0_r'])
+            l1_1 = np.clip((theta[9] + theta[10]) * np.ones(nwalkers) + 
+                       0.01*np.random.randn(nwalkers), theta_range_default['min_l1_r'], theta_range_default['max_l1_r']) - l0_1
+            theta = np.vstack((particle_index,particle_index_imag,matrix_index,
+                               matrix_index_imag,vf,radius,thickness,l0,l1,l0_1,l1_1)).T.tolist()
+            return (theta, l0, l1, l0_1, l1_1)
+    else: 
+        theta = np.vstack((particle_index,particle_index_imag,matrix_index,
+                           matrix_index_imag,vf,radius,thickness)).T.tolist()
+
+        return theta
+
 
 def run_mcmc_without_inference(data, sample, theta_guess, theta_range, 
                                ntrajectories=600, nevents=200, losses=False, seed=None):
@@ -252,7 +331,8 @@ def run_mcmc_without_inference(data, sample, theta_guess, theta_range,
            
     # update the theta_guess and theta_range dictionaries depending on whether
     # the user inputs reflectance and/or transmittance data
-    guess_keylist = ['particle_index', 'matrix_index', 'phi', 'radius', 'thickness']
+    guess_keylist = ['particle_index', 'particle_index_imag', 'matrix_index',
+                     'matrix_index_imag', 'phi', 'radius', 'thickness']
     if losses == True:
         if 'reflectance' in data.keys():
             guess_keylist = guess_keylist + ['l0_r', 'l1_r']
@@ -269,7 +349,8 @@ def run_mcmc_without_inference(data, sample, theta_guess, theta_range,
 
     # Calculate the standard deviation of the multiple scattering calculations
     # based on number of trajectories and number of scattering events
-    sigma = calc_sigma(theta_guess['particle_index'], theta_guess['matrix_index'], 
+    sigma = calc_sigma(theta_guess['particle_index'], theta_guess['particle_index_imag'],
+                       theta_guess['matrix_index'], theta_guess['matrix_index_imag'], 
                        theta_guess['phi'], theta_guess['radius'], theta_guess['thickness'], 
                        sample, ntrajectories, nevents, plot=False, seed=seed)
    

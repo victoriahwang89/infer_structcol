@@ -101,7 +101,8 @@ class Sample:
         thickness of the sample (optional)
     '''
     def __init__(self, wavelength, medium_index=1, front_index=1, back_index=1, 
-                 incident_angle=0, particle_index=None, matrix_index=None, 
+                 incident_angle=0, particle_index=None, particle_index_imag=None, 
+                 matrix_index=None, matrix_index_imag=None, 
                  phi=None, radius=None, thickness=None, 
                  l0_r=None, l1_r=None, l0_t=None, l1_t=None):
         self.wavelength = convert_dtype(wavelength)   # in nm
@@ -112,8 +113,12 @@ class Sample:
         
         if particle_index is not None: 
             self.particle_index = particle_index
+        if particle_index_imag is not None: 
+            self.particle_index_imag = particle_index_imag
         if matrix_index is not None: 
             self.matrix_index = matrix_index
+        if matrix_index_imag is not None: 
+            self.matrix_index_imag = matrix_index_imag
         if phi is not None: 
             self.phi = phi
         if radius is not None:
@@ -190,8 +195,8 @@ def convert_dtype(inval):
     '''
     if np.isscalar(inval):
         inval = [inval]
-    return np.array(inval).astype('float64')
-    #return np.array(inval).astype('complex64')
+    #return np.array(inval).astype('float64')
+    return np.array(inval).astype('complex64')
 
 def find_filenames(directory, suffix=".csv" ):
     '''

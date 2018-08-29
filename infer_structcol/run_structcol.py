@@ -13,8 +13,9 @@ import seaborn as sns
 import os
 sns.set(font_scale=1.3) 
 
-def calc_sigma(particle_index, matrix_index, volume_fraction, radius, thickness, 
-               Sample, ntrajectories, nevents, run_num=100, plot=True, seed=None):
+def calc_sigma(particle_index, particle_index_imag, matrix_index, matrix_index_imag, 
+               volume_fraction, radius, thickness, Sample, ntrajectories, nevents, 
+               run_num=100, plot=True, seed=None):
     """
     Calculates the standard deviation of the multiple scattering calculations
     by running the multiple scattering code run_num times.
@@ -58,7 +59,8 @@ def calc_sigma(particle_index, matrix_index, volume_fraction, radius, thickness,
     reflectance = np.zeros([run_num, len(wavelength)])
     transmittance = np.zeros([run_num, len(wavelength)])
     for n in np.arange(run_num):
-         reflectance[n,:], transmittance[n,:] = calc_refl_trans(particle_index, matrix_index,
+         reflectance[n,:], transmittance[n,:] = calc_refl_trans(particle_index, particle_index_imag, 
+                                                                matrix_index, matrix_index_imag,
                                                                 volume_fraction, radius, thickness, 
                                                                 Sample, ntrajectories, nevents, seed)
 
@@ -80,10 +82,11 @@ def calc_sigma(particle_index, matrix_index, volume_fraction, radius, thickness,
         ax_t.errorbar(wavelength.magnitude, mean_t, yerr=sigma_t, fmt='.')
         ax_r.set(title='Theoretical reflectance and transmittance +/- 1 standard deviation')
 
-    return(sigma_r, sigma_t)
+    return(100*sigma_r, 100*sigma_t)
     
 
-def calc_refl_trans(particle_index, matrix_index, volume_fraction, radius, 
+def calc_refl_trans(particle_index, particle_index_imag, matrix_index, 
+                    matrix_index_imag, volume_fraction, radius, 
                     thickness, Sample, ntrajectories, nevents, seed):
     """
     Calculates a reflection spectrum using the structcol package.
@@ -116,8 +119,8 @@ def calc_refl_trans(particle_index, matrix_index, volume_fraction, radius,
     # Read in system parameters from the Sample object
     particle_radius = sc.Quantity(radius, 'nm')
     thickness = sc.Quantity(thickness, 'um')
-    particle_index = sc.Quantity(particle_index, '')
-    matrix_index = sc.Quantity(matrix_index, '')
+    particle_index = sc.Quantity(particle_index, '') + particle_index_imag*1j
+    matrix_index = sc.Quantity(matrix_index, '') + matrix_index_imag*1j
     
     medium_index = sc.Quantity(Sample.medium_index, '')
     front_index = sc.Quantity(Sample.front_index, '')
