@@ -82,7 +82,7 @@ def calc_sigma(particle_index, particle_index_imag, matrix_index, matrix_index_i
         ax_t.errorbar(wavelength.magnitude, mean_t, yerr=sigma_t, fmt='.')
         ax_r.set(title='Theoretical reflectance and transmittance +/- 1 standard deviation')
 
-    return(100*sigma_r, 100*sigma_t)
+    return(sigma_r, sigma_t)
     
 
 def calc_refl_trans(particle_index, particle_index_imag, matrix_index, 
